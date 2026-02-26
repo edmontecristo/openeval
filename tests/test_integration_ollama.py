@@ -15,13 +15,16 @@ pytestmark = pytest.mark.integration
 
 
 def _get_any_ollama_model() -> str:
-    """Return the full model tag of the first available Ollama model."""
+    """Return the full model tag of the first available Ollama CHAT model."""
     r = httpx.get("http://localhost:11434/api/tags", timeout=5.0)
     models = r.json().get("models", [])
     if not models:
         pytest.skip("No Ollama models pulled (run: ollama pull tinyllama)")
-    # Use full name e.g. "qwen2.5-coder:7b" — Ollama requires the full tag
-    return models[0]["name"]
+    # Skip embedding-only models — they don't support chat completions
+    chat_models = [m["name"] for m in models if "embed" not in m["name"].lower()]
+    if not chat_models:
+        pytest.skip("No Ollama chat models available (only embedding models found)")
+    return chat_models[0]
 
 
 class TestOllamaConnectivity:

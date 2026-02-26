@@ -216,3 +216,119 @@ def tmp_dataset_dir(tmp_path):
     )
 
     return dataset_dir
+
+
+
+# ─── Integration Test Fixtures (Real LLM Backends) ──────────────
+# These fixtures create REAL API clients for integration tests.
+# They auto-detect available backends (Ollama first, then OpenAI).
+
+import httpx
+
+
+def _ollama_available() -> bool:
+    """Check if Ollama server is running locally."""
+    try:
+        r = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+        return r.status_code == 200
+    except (httpx.ConnectError, httpx.TimeoutException):
+        return False
+
+
+def _ollama_has_model(model: str) -> bool:
+    """Check if a specific model is pulled in Ollama."""
+    try:
+        r = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+        if r.status_code != 200:
+            return False
+        models = [m["name"].split(":")[0] for m in r.json().get("models", [])]
+        return model in models
+    except Exception:
+        return False
+
+
+def _openai_key_available() -> bool:
+    return bool(os.environ.get("OPENAI_API_KEY"))
+
+
+@pytest.fixture(scope="session")
+def ollama_available():
+    return _ollama_available()
+
+
+@pytest.fixture(scope="session")
+def openai_key_available():
+    return _openai_key_available()
+
+
+@pytest.fixture(scope="session")
+def real_ollama_client():
+    """Real Ollama client. Skips if Ollama not running."""
+    if not _ollama_available():
+        pytest.skip("Ollama server not running at localhost:11434")
+    from openai import OpenAI
+    return OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+
+
+@pytest.fixture(scope="session")
+def real_openai_client():
+    """Real OpenAI client. Skips if OPENAI_API_KEY not set."""
+    key = os.environ.get("OPENAI_API_KEY")
+    if not key:
+        pytest.skip("OPENAI_API_KEY not set")
+    from openai import OpenAI
+    return OpenAI(api_key=key)
+
+
+@pytest.fixture(scope="session")
+def real_client():
+    """Best available real client: Ollama first (free), then OpenAI."""
+    from openai import OpenAI
+    if _ollama_available():
+        return OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+    key = os.environ.get("OPENAI_API_KEY")
+    if key:
+        return OpenAI(api_key=key)
+    pytest.skip("No LLM backend available (need Ollama or OPENAI_API_KEY)")
+
+
+@pytest.fixture(scope="session")
+def llm_model(real_client):
+    """Best available chat model for the current backend."""
+    base_url = str(getattr(real_client, '_base_url', ''))
+    if "11434" in base_url:
+        for model in ["llama3.2", "llama3", "mistral", "qwen2.5", "gemma2"]:
+            if _ollama_has_model(model):
+                return model
+        try:
+            r = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+            models = r.json().get("models", [])
+            # Skip embedding-only models — they don't support chat completions
+            chat_models = [m["name"] for m in models if "embed" not in m["name"].lower()]
+            if chat_models:
+                return chat_models[0]  # full tag e.g. qwen2.5-coder:7b
+        except Exception:
+            pass
+        pytest.skip("Ollama running but no chat models pulled (run: ollama pull tinyllama)")
+    else:
+        return "gpt-4o-mini"
+
+
+@pytest.fixture(scope="session")
+def embedding_model(real_client):
+    """Best available embedding model."""
+    base_url = str(getattr(real_client, '_base_url', ''))
+    if "11434" in base_url:
+        for model in ["nomic-embed-text", "all-minilm", "mxbai-embed-large"]:
+            if _ollama_has_model(model):
+                return model
+        pytest.skip("No embedding model in Ollama (run: ollama pull nomic-embed-text)")
+    else:
+        return "text-embedding-3-small"
+
+
+@pytest.fixture(scope="session")
+def backend_name(real_client):
+    """Return 'ollama' or 'openai' for logging."""
+    base_url = str(getattr(real_client, '_base_url', ''))
+    return "ollama" if "11434" in base_url else "openai"

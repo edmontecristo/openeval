@@ -146,17 +146,39 @@ Return ONLY valid JSON: {{"score": <float>, "reason": "<explanation>"}}"""
         """
         Parse LLM JSON response.
 
+        Handles raw JSON and markdown-fenced JSON (```json...```).
+        Falls back to regex extraction if JSON parsing fails.
+
         Args:
             content: Raw response content from LLM
 
         Returns:
             Tuple of (score, reason). Returns (0.0, error_message) on parse failure.
         """
+        import re
+        # Strip markdown code fences if present (common with Ollama models)
+        cleaned = content.strip()
+        if cleaned.startswith("```"):
+            cleaned = re.sub(r'^```[a-zA-Z]*\n?', '', cleaned)
+            cleaned = re.sub(r'```\s*$', '', cleaned).strip()
+
         try:
-            parsed = json.loads(content)
+            parsed = json.loads(cleaned)
             score_val = float(parsed.get("score", 0.0))
             reason = parsed.get("reason", "")
             return (score_val, reason)
         except (json.JSONDecodeError, KeyError, ValueError, TypeError):
-            # Handle malformed JSON gracefully
-            return (0.0, f"Failed to parse response: {content[:100]}")
+            pass
+
+        # Last resort: regex extract score and reason
+        score_match = re.search(r'"score"\s*:\s*([0-9.]+)', content)
+        reason_match = re.search(r'"reason"\s*:\s*"([^"]+)"', content)
+        if score_match:
+            try:
+                score_val = float(score_match.group(1))
+                reason = reason_match.group(1) if reason_match else "Extracted via regex"
+                return (score_val, reason)
+            except ValueError:
+                pass
+
+        return (0.0, f"Failed to parse response: {content[:200]}")

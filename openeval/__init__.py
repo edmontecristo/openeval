@@ -1,13 +1,16 @@
 """
 OpenEval — Open-source LLM evaluation framework.
 
-A Braintrust.dev alternative designed for CLI-first, developer-friendly usage.
+Evaluate, compare, and ship better AI applications with a scorer-based system,
+CLI-first workflow, and CI/CD-native quality gates.
 """
 
 from openeval.test_case import TestCase
 from openeval.types import ScoreResult, ExperimentResult, EvalResult
 from openeval.scorers.base import BaseScorer, FunctionScorer
 from openeval.tracing import trace, Span, TraceSession, get_current_traces
+from openeval.eval import Eval
+from openeval.experiment import compare_experiments
 
 __all__ = [
     "TestCase",
@@ -20,4 +23,6 @@ __all__ = [
     "Span",
     "TraceSession",
     "get_current_traces",
+    "Eval",
+    "compare_experiments",
 ]

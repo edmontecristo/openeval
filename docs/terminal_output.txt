@@ -1,0 +1,8 @@
+   Experiment: ollama-quickstart    
+┏━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━┓
+┃ Scorer      ┃ Mean   ┃ Pass Rate ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━┩
+│ ContainsAny │ 1.0000 │ 100%      │
+│ ExactMatch  │ 0.0000 │ 0%        │
+└─────────────┴────────┴───────────┘
+Duration: 902ms

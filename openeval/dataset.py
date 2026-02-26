@@ -9,7 +9,7 @@ import csv
 import json
 import random
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Union
 
 
 class Dataset:
@@ -39,7 +39,7 @@ class Dataset:
             name: Dataset identifier for logging/export
         """
         self.name = name
-        self._items: list[dict] = []
+        self._items: List[dict] = []
 
     def add(self, item: dict):
         """
@@ -73,7 +73,7 @@ class Dataset:
         return self._items[idx]
 
     @classmethod
-    def from_csv(cls, path: str | Path) -> "Dataset":
+    def from_csv(cls, path: Union[str, Path]) -> "Dataset":
         """
         Load dataset from CSV file.
 
@@ -101,7 +101,7 @@ class Dataset:
         return dataset
 
     @classmethod
-    def from_json(cls, path: str | Path) -> "Dataset":
+    def from_json(cls, path: Union[str, Path]) -> "Dataset":
         """
         Load dataset from JSON file.
 
@@ -128,7 +128,7 @@ class Dataset:
             dataset.add(item)
         return dataset
 
-    def save_json(self, path: str | Path):
+    def save_json(self, path: Union[str, Path]):
         """
         Save dataset to JSON file.
 
@@ -138,7 +138,7 @@ class Dataset:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(self._items, f, indent=2)
 
-    def filter(self, tags: Optional[list[str]] = None) -> "Dataset":
+    def filter(self, tags: Optional[List[str]] = None) -> "Dataset":
         """
         Filter dataset by tags.
 

@@ -1,7 +1,7 @@
 [project]
 name = "openeval"
 version = "0.1.0"
-description = "Open-source LLM evaluation framework — self-hosted Braintrust alternative"
+description = "Open-source LLM evaluation framework with CLI-first workflow and CI/CD quality gates"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"

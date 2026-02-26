@@ -12,10 +12,29 @@ from rich.console import Console
 from rich.table import Table
 
 
-@click.group()
-def main():
+@click.group(invoke_without_command=True)
+@click.pass_context
+def main(ctx):
     """OpenEval — Open-source LLM evaluation framework."""
-    pass
+    if ctx.invoked_subcommand is None:
+        console = Console()
+        logo = """
+ ██████╗ ██████╗ ███████╗███╗   ██╗███████╗██╗   ██╗ █████╗ ██╗     
+██╔═══██╗██╔══██╗██╔════╝████╗  ██║██╔════╝██║   ██║██╔══██╗██║     
+██║   ██║██████╔╝█████╗  ██╔██╗ ██║█████╗  ██║   ██║███████║██║     
+██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔══██║██║     
+╚██████╔╝██║     ███████╗██║ ╚████║███████╗ ╚████╔╝ ██║  ██║███████╗
+ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              CLI-First LLM Evaluation Framework
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+        console.print(f"[bold blue]{logo}[/bold blue]", highlight=False)
+        console.print("Welcome to OpenEval! \n")
+        console.print("Get started by creating an evaluation script, ex: `eval.py`. Then run:")
+        console.print("  [bold cyan]openeval run eval.py[/bold cyan]\n")
+        console.print("For more information and options, run:")
+        console.print("  [bold cyan]openeval --help[/bold cyan]")
 
 
 @main.command()

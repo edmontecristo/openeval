@@ -1,77 +1,164 @@
-# 🔬 OpenEval
+<pre align="center">
+ ██████╗ ██████╗ ███████╗███╗   ██╗███████╗██╗   ██╗ █████╗ ██╗     
+██╔═══██╗██╔══██╗██╔════╝████╗  ██║██╔════╝██║   ██║██╔══██╗██║     
+██║   ██║██████╔╝█████╗  ██╔██╗ ██║█████╗  ██║   ██║███████║██║     
+██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔══██║██║     
+╚██████╔╝██║     ███████╗██║ ╚████║███████╗ ╚████╔╝ ██║  ██║███████╗
+ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝
+</pre>
 
-**Open-source LLM evaluation framework. Evaluate, compare, and ship better AI apps.**
+<p align="center">
+  <em>CLI-first LLM evaluation — like Pytest for AI agents</em>
+</p>
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <a href="https://pypi.org/project/openeval/">
+    <img src="https://img.shields.io/badge/pip-openeval-0C55D6?logo=pypi&logoColor=white" alt="PyPI">
+  </a>
+  <a href="https://github.com/YOUR/openeval/actions">
+    <img src="https://img.shields.io/badge/tests-117%20passing-brightgreen" alt="Tests">
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+  </a>
+  <a href="https://python.org">
+    <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python">
+  </a>
+</p>
+
+<p align="center">
+  <sub>
+    <a href="https://github.com/confident-ai/deepeval">DeepEval</a> ×
+    <a href="https://www.braintrust.dev">Braintrust</a> —
+    but CLI-first, self-hosted, and free forever
+  </sub>
+</p>
 
 ---
 
 ## Why OpenEval?
 
-LLM outputs are non-deterministic. You can't just `assertEqual`. You need specialized scorers that understand semantics, faithfulness, and tool usage.
+**LLM outputs are non-deterministic.** You can't just `assertEqual`. You need specialized scorers that understand semantics, faithfulness, and tool usage.
 
 OpenEval gives you:
 
 - **7 built-in scorers** — from exact match to LLM-as-a-Judge
-- **CLI-first** — run evals from terminal, get rich tables
+- **CLI-first** — `openeval run eval.py` with beautiful terminal output
 - **CI/CD native** — `--fail-under 0.8` breaks your build on quality drops
 - **Self-contained HTML reports** — share results without a server
-- **Cost tracking** — know exactly how much each eval costs in tokens and USD
-- **100% self-hosted** — no SaaS, no data leaves your machine
+- **Cost tracking** — know exactly how much each eval costs
+- **100% self-hosted** — works with Ollama for $0 local evals
+- **Zero vendor lock-in** — your data stays on your machine
+
+---
 
 ## Quick Start
-
-### Install
 
 ```bash
 pip install openeval
 ```
 
-### Write your first eval
+Create `eval.py`:
 
 ```python
+from openai import OpenAI
 from openeval import Eval
-from openeval.scorers.exact_match import ExactMatchScorer
-from openeval.scorers.contains import ContainsAnyScorer
+from openeval.scorers import ContainsAnyScorer, FaithfulnessScorer
+
+client = OpenAI()
+
+def my_agent(question: str) -> str:
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": question}]
+    )
+    return response.choices[0].message.content
 
 result = Eval(
-    name="my-chatbot-v2",
+    name="my-eval",
     data=[
-        {"input": "What are your hours?", "expected_output": "9am to 5pm"},
-        {"input": "Return policy?", "expected_output": "30-day refund"},
+        {"input": "What is 2+2?", "expected_output": "4"},
+        {"input": "Return policy?", "expected_output": "30 days", "context": ["30-day refund policy"]},
     ],
-    task=lambda input: my_chatbot(input),  # your LLM app
+    task=my_agent,
     scorers=[
-        ExactMatchScorer(),
-        ContainsAnyScorer(keywords=["hours", "refund", "policy"]),
+        ContainsAnyScorer(keywords=["4", "four"]),
+        FaithfulnessScorer(client=client),
     ],
 )
-
-print(f"Score: {result.summary}")
 ```
 
-### Run from CLI
+Run it:
 
 ```bash
-openeval run my_eval.py
-openeval run my_eval.py --report report.html
-openeval run my_eval.py --fail-under 0.8  # exit code 1 if below threshold
+openeval run eval.py
 ```
+
+**Output:**
+
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  Experiment: my-eval                  ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ Scorer       │ Mean    │ Pass Rate   │
+├──────────────┼─────────┼─────────────┤
+│ ContainsAny  │ 1.0000  │ 100%        │
+│ Faithfulness │ 0.9500  │ 100%        │
+├──────────────┴─────────┴─────────────┤
+│ Duration: 2.3s                         │
+│ Cost: $0.00045                         │
+└────────────────────────────────────────┘
+```
+
+---
+
+## Why NOT DeepEval / AgentOps / Braintrust?
+
+| | OpenEval | DeepEval | AgentOps | Braintrust |
+|---|---|---|---|---|
+| **Price** | ✅ Free forever | Freemium | Freemium | $249/mo |
+| **CLI-first** | ✅ Native | ❌ Library-only | ❌ Dashboard-first | ❌ Web-only |
+| **Self-contained HTML** | ✅ No server needed | ❌ Requires platform | ❌ Requires app | ❌ Web-only |
+| **CI/CD native** | ✅ Exit codes | ⚠️ Manual | ⚠️ Manual | ❌ No |
+| **Local LLM support** | ✅ Ollama | ❌ OpenAI only | ⚠️ Partial | ❌ No |
+| **Philosophy** | Tool you own | Framework | Platform | SaaS |
+| **Best for** | CI/CD quality gates | Research evals | Production monitoring | Teams |
+
+**OpenEval is a tool, not a platform.** You own your data, you run it where you want.
+
+---
+
+## CLI Usage
+
+```bash
+# Basic run
+openeval run eval.py
+
+# Generate HTML report
+openeval run eval.py --report results.html
+
+# Fail CI if scores below threshold
+openeval run eval.py --fail-under 0.8
+
+# Run with Ollama (free, local)
+# Just set OPENAI_BASE_URL=http://localhost:11434/v1
+```
+
+---
 
 ## Scorers
 
 | Scorer | Type | What it checks |
-| --- | --- | --- |
+|---|---|---|
 | `ExactMatchScorer` | Deterministic | Output matches expected exactly |
 | `ContainsAnyScorer` | Deterministic | Output contains at least one keyword |
 | `ContainsAllScorer` | Deterministic | Output contains all keywords |
-| `SimilarityScorer` | Embedding | Cosine similarity via OpenAI embeddings |
-| `LLMJudgeScorer` | LLM-as-a-Judge | Custom criteria evaluated by GPT |
+| `SimilarityScorer` | Embedding | Cosine similarity via embeddings |
+| `LLMJudgeScorer` | LLM-as-a-Judge | Custom criteria evaluated by LLM |
 | `FaithfulnessScorer` | LLM-as-a-Judge | Is output grounded in context? (hallucination detection) |
 | `ToolCorrectnessScorer` | Deterministic | Did the agent call the right tools? |
 
-### Custom scorers
+**Custom scorers:**
 
 ```python
 from openeval.scorers.base import FunctionScorer
@@ -82,56 +169,56 @@ length_scorer = FunctionScorer(
 )
 ```
 
-## Features
+---
 
-### Datasets
+## Datasets
 
 ```python
 from openeval.dataset import Dataset
 
+# Load from file
 ds = Dataset.from_csv("test_cases.csv")
 ds = Dataset.from_json("test_cases.json")
+
+# Filter and sample
 ds_easy = ds.filter(tags=["easy"])
 ds_sample = ds.sample(50)
 ```
 
-### Tracing
+---
 
-```python
-from openeval.tracing import trace
-
-@trace
-def my_llm_call(query: str) -> str:
-    return openai.chat(query)
-
-# Captures input, output, duration, and errors automatically
-```
-
-### Cost Tracking
-
-```python
-# Costs tracked automatically for LLM scorers
-print(f"Total cost: ${result.total_cost_usd:.6f}")
-print(f"Total tokens: {result.summary['total_tokens']}")
-```
-
-### HTML Reports
-
-```bash
-openeval run eval.py --report results.html
-```
-
-Generates a self-contained HTML file with scores, reasons, and comparisons. No server needed — just open in a browser.
-
-### CI/CD Integration
+## CI/CD Integration
 
 ```yaml
-# GitHub Actions
-- name: Run LLM eval
-  run: openeval run tests/eval_chatbot.py --fail-under 0.8
+# .github/workflows/llm-eval.yml
+name: LLM Quality Gate
+on: [pull_request]
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install openeval
+      - run: openeval run tests/eval_chatbot.py --fail-under 0.8
 ```
 
-Exit code 1 when quality drops below threshold. Your PR won't merge if the chatbot gets worse.
+Exit code 1 when quality drops → PR blocked.
+
+---
+
+## Cost Tracking
+
+```python
+# Costs tracked automatically
+print(f"Total cost: ${result.total_cost_usd:.6f}")
+print(f"Total tokens: {result.summary['total_tokens']}")
+
+# Breakdown by scorer
+for scorer_name, stats in result.summary.items():
+    print(f"{scorer_name}: ${stats.get('cost_usd', 0):.6f}")
+```
+
+---
 
 ## Project Structure
 
@@ -146,24 +233,32 @@ openeval/
 ├── report.py            # HTML report generator
 ├── cli.py               # CLI interface
 └── scorers/
-    ├── base.py           # BaseScorer interface
+    ├── base.py          # BaseScorer interface
     ├── exact_match.py
     ├── contains.py
-    ├── similarity.py
-    ├── llm_judge.py
-    ├── faithfulness.py
+    ├── similarity.py    # Embedding-based
+    ├── llm_judge.py     # LLM-as-a-Judge
+    ├── faithfulness.py  # Hallucination detection
     └── tool_correctness.py
 ```
+
+---
 
 ## Development
 
 ```bash
-git clone https://github.com/yourusername/openeval.git
+git clone https://github.com/YOUR/openeval.git
 cd openeval
 pip install -e ".[dev]"
 pytest tests/ -v
 ```
 
+---
+
 ## License
 
-MIT
+MIT © OpenEval Contributors
+
+---
+
+**Built for developers who ship AI products.**

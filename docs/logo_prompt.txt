@@ -1,0 +1,40 @@
+# OpenEval Logo Design Brief
+
+## Concept
+A scientific, modern logo combining:
+- Microscope icon (symbolizing "evaluation" and "analysis")
+- Terminal/console elements (CLI-first philosophy)
+- Green checkmark or progress indicator (testing/success)
+
+## Style
+- Flat, minimalist design
+- Color palette: Emerald green (#10b981) + Slate blue (#6366f1)
+- White background for versatility
+- Appropriate for GitHub README and documentation
+
+## AI Image Generation Prompts
+
+### For Midjourney:
+```
+/minimalist flat logo design, microscope icon integrated with terminal
+prompt symbol, emerald green and slate blue, white background,
+clean modern tech aesthetic, vector style, github ready --v 6
+```
+
+### For DALL-E:
+```
+"A minimal flat logo for an open-source developer tool. A stylized
+microscope combined with terminal command prompt elements. Colors:
+emerald green and slate blue on white background. Clean, modern,
+geometric design suitable for GitHub README."
+```
+
+### For Ideogram:
+```
+Logo design, microscope meets terminal CLI, minimalist, flat design,
+emerald green #10b981, slate blue #6366f1, white background,
+developer tool aesthetic, vector style --brand 2.0
+```
+
+## ASCII Version (for terminal)
+See: docs/logo.txt
