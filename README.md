@@ -15,7 +15,7 @@
   <a href="https://pypi.org/project/openeval/">
     <img src="https://img.shields.io/badge/pip-openeval-0C55D6?logo=pypi&logoColor=white" alt="PyPI">
   </a>
-  <a href="https://github.com/YOUR/openeval/actions">
+  <a href="https://github.com/edmontecristo/openeval/actions">
     <img src="https://img.shields.io/badge/tests-117%20passing-brightgreen" alt="Tests">
   </a>
   <a href="https://opensource.org/licenses/MIT">
@@ -247,7 +247,7 @@ openeval/
 ## Development
 
 ```bash
-git clone https://github.com/YOUR/openeval.git
+git clone https://github.com/edmontecristo/openeval.git
 cd openeval
 pip install -e ".[dev]"
 pytest tests/ -v
