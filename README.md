@@ -1,19 +1,19 @@
 <pre align="center">
- ██████╗ ██████╗ ███████╗███╗   ██╗███████╗██╗   ██╗ █████╗ ██╗     
-██╔═══██╗██╔══██╗██╔════╝████╗  ██║██╔════╝██║   ██║██╔══██╗██║     
-██║   ██║██████╔╝█████╗  ██╔██╗ ██║█████╗  ██║   ██║███████║██║     
-██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔══██║██║     
+ ██████╗ ██████╗ ███████╗███╗   ██╗███████╗██╗   ██╗ █████╗ ██╗
+██╔═══██╗██╔══██╗██╔════╝████╗  ██║██╔════╝██║   ██║██╔══██╗██║
+██║   ██║██████╔╝█████╗  ██╔██╗ ██║█████╗  ██║   ██║███████║██║
+██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔══██║██║
 ╚██████╔╝██║     ███████╗██║ ╚████║███████╗ ╚████╔╝ ██║  ██║███████╗
  ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝
 </pre>
 
 <p align="center">
-  <em>CLI-first LLM evaluation — like Pytest for AI agents</em>
+  <em>AI Agent Evaluation Framework — test agents like you test software</em>
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/openeval/">
-    <img src="https://img.shields.io/badge/pip-openeval-0C55D6?logo=pypi&logoColor=white" alt="PyPI">
+  <a href="https://pypi.org/project/openeval-cli/">
+    <img src="https://img.shields.io/badge/pip-openeval--cli-0C55D6?logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <a href="https://github.com/edmontecristo/openeval/actions">
     <img src="https://img.shields.io/badge/tests-117%20passing-brightgreen" alt="Tests">
@@ -28,9 +28,7 @@
 
 <p align="center">
   <sub>
-    <a href="https://github.com/confident-ai/deepeval">DeepEval</a> ×
-    <a href="https://www.braintrust.dev">Braintrust</a> —
-    but CLI-first, self-hosted, and free forever
+    For coding agents, RAG systems, and multi-step tool users
   </sub>
 </p>
 
@@ -38,17 +36,17 @@
 
 ## Why OpenEval?
 
-**LLM outputs are non-deterministic.** You can't just `assertEqual`. You need specialized scorers that understand semantics, faithfulness, and tool usage.
+**AI agents are non-deterministic software.** They can call tools in the wrong order, hallucinate facts, or lose context across multi-step tasks. You can't just `assertEqual` — you need specialized evaluation.
 
 OpenEval gives you:
 
-- **7 built-in scorers** — from exact match to LLM-as-a-Judge
-- **CLI-first** — `openeval run eval.py` with beautiful terminal output
-- **CI/CD native** — `--fail-under 0.8` breaks your build on quality drops
-- **Self-contained HTML reports** — share results without a server
-- **Cost tracking** — know exactly how much each eval costs
-- **100% self-hosted** — works with Ollama for $0 local evals
-- **Zero vendor lock-in** — your data stays on your machine
+- **🤖 Agent-first** — Built for tool-coding, multi-step reasoning, and stateful agents
+- **🔧 7 built-in scorers** — Tool correctness, hallucination detection, semantic similarity, LLM-as-a-Judge
+- **💻 CLI-first** — `openeval run eval.py` with beautiful terminal output
+- **🚦 CI/CD native** — `--fail-under 0.8` breaks your build on quality drops
+- **📊 Cost tracking** — Know exactly what each eval run costs
+- **🏠 100% self-hosted** — Works with Ollama for $0 local evals
+- **🔓 Zero vendor lock-in** — Your data stays on your machine
 
 ---
 
@@ -58,32 +56,39 @@ OpenEval gives you:
 pip install openeval-cli
 ```
 
-Create `eval.py`:
+Create `eval.py` to test a **coding agent**:
 
 ```python
 from openai import OpenAI
 from openeval import Eval
-from openeval.scorers import ContainsAnyScorer, FaithfulnessScorer
+from openeval.scorers import ToolCorrectnessScorer, ContainsAnyScorer
 
-client = OpenAI()
+client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 
-def my_agent(question: str) -> str:
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": question}]
-    )
-    return response.choices[0].message.content
+def coding_agent(task: str) -> str:
+    """Agent that reads files, edits code, and runs tests"""
+    # Your agent implementation here
+    # Returns: JSON with tools_called and final_output
+    return '{"tools_called": ["read_file", "edit_file", "run_tests"], "output": "Tests passed"}'
 
 result = Eval(
-    name="my-eval",
+    name="coding-agent-eval",
     data=[
-        {"input": "What is 2+2?", "expected_output": "4"},
-        {"input": "Return policy?", "expected_output": "30 days", "context": ["30-day refund policy"]},
+        {
+            "input": "Fix the failing test in test_calculator.py",
+            "expected_tools": ["read_file", "edit_file", "run_tests"],
+            "actual_output": '{"tools_called": ["read_file", "edit_file", "run_tests"], "output": "Tests passed"}',
+        },
+        {
+            "input": "Add a division function to calculator.py",
+            "expected_tools": ["read_file", "edit_file"],
+            "actual_output": '{"tools_called": ["read_file", "edit_file"], "output": "Added divide()"}',
+        },
     ],
-    task=my_agent,
+    task=coding_agent,
     scorers=[
-        ContainsAnyScorer(keywords=["4", "four"]),
-        FaithfulnessScorer(client=client),
+        ToolCorrectnessScorer(),  # Did agent call the right tools in order?
+        ContainsAnyScorer(keywords=["Tests passed", "divide"]),  # Did it solve the task?
     ],
 )
 ```
@@ -98,33 +103,61 @@ openeval run eval.py
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃  Experiment: my-eval                  ┃
+┃  Experiment: coding-agent-eval         ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ Scorer       │ Mean    │ Pass Rate   │
-├──────────────┼─────────┼─────────────┤
-│ ContainsAny  │ 1.0000  │ 100%        │
-│ Faithfulness │ 0.9500  │ 100%        │
-├──────────────┴─────────┴─────────────┤
-│ Duration: 2.3s                         │
-│ Cost: $0.00045                         │
-└────────────────────────────────────────┘
+│ Scorer            │ Mean    │ Pass Rate   │
+├───────────────────┼─────────┼─────────────┤
+│ ToolCorrectness   │ 1.0000  │ 100%        │
+│ ContainsAny       │ 1.0000  │ 100%        │
+├───────────────────┴─────────┴─────────────┤
+│ Duration: 2.3s                             │
+│ Cost: $0.00000 (Ollama, free)             │
+└────────────────────────────────────────────┘
 ```
 
 ---
 
-## Why NOT DeepEval / AgentOps / Braintrust?
+## Agent Evaluation
 
-| | OpenEval | DeepEval | AgentOps | Braintrust |
-|---|---|---|---|---|
-| **Price** | ✅ Free forever | Freemium | Freemium | $249/mo |
-| **CLI-first** | ✅ Native | ❌ Library-only | ❌ Dashboard-first | ❌ Web-only |
-| **Self-contained HTML** | ✅ No server needed | ❌ Requires platform | ❌ Requires app | ❌ Web-only |
-| **CI/CD native** | ✅ Exit codes | ⚠️ Manual | ⚠️ Manual | ❌ No |
-| **Local LLM support** | ✅ Ollama | ❌ OpenAI only | ⚠️ Partial | ❌ No |
-| **Philosophy** | Tool you own | Framework | Platform | SaaS |
-| **Best for** | CI/CD quality gates | Research evals | Production monitoring | Teams |
+OpenEval specializes in testing **agentic behavior** that traditional unit tests miss:
 
-**OpenEval is a tool, not a platform.** You own your data, you run it where you want.
+### 🛠️ **Tool Calling**
+```python
+from openeval.scorers import ToolCorrectnessScorer
+
+ToolCorrectnessScorer()
+# Checks: Did the agent call the right tools, in the right order?
+# Use case: Coding agents, data analysis agents, research assistants
+```
+
+### 🧠 **Hallucination Detection**
+```python
+from openeval.scorers import FaithfulnessScorer
+
+FaithfulnessScorer(client=client)
+# Checks: Is the agent's output grounded in the provided context?
+# Use case: RAG systems, knowledge bases, documentation agents
+```
+
+### 🎯 **Custom Criteria**
+```python
+from openeval.scorers import LLMJudgeScorer
+
+LLMJudgeScorer(
+    criteria="Did the agent follow the user's instructions exactly?",
+    client=client,
+)
+# Use case: Instruction following, format compliance, tone checks
+```
+
+### 📏 **Semantic Similarity**
+```python
+from openeval.scorers import SimilarityScorer
+
+SimilarityScorer(client=client)
+# Checks: Is the output semantically similar to the expected answer?
+# Use case: Open-ended tasks, multiple valid solutions
+```
 
 ---
 
@@ -137,37 +170,80 @@ openeval run eval.py
 # Generate HTML report
 openeval run eval.py --report results.html
 
-# Fail CI if scores below threshold
+# Fail CI if scores below threshold (blocks PR on quality drop)
 openeval run eval.py --fail-under 0.8
 
 # Run with Ollama (free, local)
 # Just set OPENAI_BASE_URL=http://localhost:11434/v1
+openeval run eval.py
+
+# Compare two experiments
+openeval compare experiment_a.json experiment_b.json
 ```
 
 ---
 
-## Scorers
+## All Scorers
 
-| Scorer | Type | What it checks |
-|---|---|---|
-| `ExactMatchScorer` | Deterministic | Output matches expected exactly |
-| `ContainsAnyScorer` | Deterministic | Output contains at least one keyword |
-| `ContainsAllScorer` | Deterministic | Output contains all keywords |
-| `SimilarityScorer` | Embedding | Cosine similarity via embeddings |
-| `LLMJudgeScorer` | LLM-as-a-Judge | Custom criteria evaluated by LLM |
-| `FaithfulnessScorer` | LLM-as-a-Judge | Is output grounded in context? (hallucination detection) |
-| `ToolCorrectnessScorer` | Deterministic | Did the agent call the right tools? |
+| Scorer | Type | What it checks | Best for |
+|---|---|---|---|
+| `ToolCorrectnessScorer` | Deterministic | Did agent call right tools in order? | **Coding agents, multi-step agents** |
+| `FaithfulnessScorer` | LLM-as-a-Judge | Is output grounded in context? | **RAG systems, hallucination detection** |
+| `LLMJudgeScorer` | LLM-as-a-Judge | Custom criteria evaluated by LLM | **Instruction following, quality checks** |
+| `SimilarityScorer` | Embedding | Cosine similarity via embeddings | Open-ended tasks, semantic match |
+| `ExactMatchScorer` | Deterministic | Output matches expected exactly | Structured outputs, IDs, codes |
+| `ContainsAnyScorer` | Deterministic | Output contains at least one keyword | **Keyword presence checks** |
+| `ContainsAllScorer` | Deterministic | Output contains all keywords | Must-have requirements |
 
 **Custom scorers:**
 
 ```python
 from openeval.scorers.base import FunctionScorer
 
-length_scorer = FunctionScorer(
-    name="OutputLength",
-    fn=lambda tc: min(len(tc.actual_output) / 100, 1.0),
+# Define your own evaluation logic
+code_quality_scorer = FunctionScorer(
+    name="CodeQuality",
+    fn=lambda tc: 1.0 if "def " in tc.actual_output and "import " in tc.actual_output else 0.5,
 )
 ```
+
+---
+
+## CI/CD Integration
+
+Block PRs that degrade agent performance:
+
+```yaml
+# .github/workflows/agent-quality.yml
+name: Agent Quality Gate
+on: [pull_request]
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install openeval-cli
+      - run: openeval run tests/eval_coding_agent.py --fail-under 0.8
+```
+
+Exit code 1 when quality drops → PR blocked. Ship better agents with confidence.
+
+---
+
+## Why NOT DeepEval / AgentOps / Braintrust?
+
+| | OpenEval | DeepEval | AgentOps | Braintrust |
+|---|---|---|---|---|
+| **Agent-first** | ✅ Built for tool-calling agents | ❌ General LLM testing | ⚠️ Monitoring only | ❌ General LLM testing |
+| **Price** | ✅ Free forever | Freemium | Freemium | $249/mo |
+| **CLI-first** | ✅ Native | ❌ Library-only | ❌ Dashboard-first | ❌ Web-only |
+| **Self-contained HTML** | ✅ No server needed | ❌ Requires platform | ❌ Requires app | ❌ Web-only |
+| **CI/CD native** | ✅ Exit codes | ⚠️ Manual | ⚠️ Manual | ❌ No |
+| **Local LLM support** | ✅ Ollama | ❌ OpenAI only | ⚠️ Partial | ❌ No |
+| **Philosophy** | Tool you own | Framework | Platform | SaaS |
+| **Best for** | **Agent dev & CI** | Research evals | Production monitoring | Teams |
+
+**OpenEval is a tool, not a platform.** You own your data, you run it where you want.
 
 ---
 
@@ -181,28 +257,12 @@ ds = Dataset.from_csv("test_cases.csv")
 ds = Dataset.from_json("test_cases.json")
 
 # Filter and sample
-ds_easy = ds.filter(tags=["easy"])
+ds_hard = ds.filter(tags=["hard", "edge-case"])
 ds_sample = ds.sample(50)
+
+# Version control your test cases
+ds.save("test_cases_v2.json")
 ```
-
----
-
-## CI/CD Integration
-
-```yaml
-# .github/workflows/llm-eval.yml
-name: LLM Quality Gate
-on: [pull_request]
-jobs:
-  eval:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install openeval-cli
-      - run: openeval run tests/eval_chatbot.py --fail-under 0.8
-```
-
-Exit code 1 when quality drops → PR blocked.
 
 ---
 
@@ -225,10 +285,10 @@ for scorer_name, stats in result.summary.items():
 ```
 openeval/
 ├── eval.py              # Eval() orchestrator
-├── test_case.py         # TestCase data model
+├── test_case.py         # TestCase data model with tools_called support
 ├── types.py             # ScoreResult, ExperimentResult
 ├── dataset.py           # Dataset loading and filtering
-├── tracing.py           # @trace decorator
+├── tracing.py           # @trace decorator for agent debugging
 ├── cost.py              # Token and cost tracking
 ├── report.py            # HTML report generator
 ├── cli.py               # CLI interface
@@ -239,7 +299,7 @@ openeval/
     ├── similarity.py    # Embedding-based
     ├── llm_judge.py     # LLM-as-a-Judge
     ├── faithfulness.py  # Hallucination detection
-    └── tool_correctness.py
+    └── tool_correctness.py  # ✨ Agent tool calling validation
 ```
 
 ---
@@ -261,4 +321,4 @@ MIT © OpenEval Contributors
 
 ---
 
-**Built for developers who ship AI products.**
+**Built for developers who ship AI agents.**

@@ -1,14 +1,14 @@
 [project]
 name = "openeval-cli"
-version = "0.1.0"
-description = "CLI-first LLM evaluation framework — like Pytest for AI agents"
+version = "0.1.1"
+description = "Agent-First LLM evaluation framework — optimized for AI agents to use and understand"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
     {name = "OpenEval Contributors"}
 ]
-keywords = ["llm", "evaluation", "mlops", "testing", "ai", "agents", "rag", "ci/cd"]
+keywords = ["ai-agents", "agent-testing", "tool-calling", "llm", "evaluation", "coding-agents", "rag", "ci-cd", "ollama", "agent-evaluation", "multi-step-reasoning", "hallucination-detection", "quality-gates", "mlops"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
