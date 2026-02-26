@@ -55,7 +55,7 @@ OpenEval gives you:
 ## Quick Start
 
 ```bash
-pip install openeval
+pip install openeval-cli
 ```
 
 Create `eval.py`:
@@ -198,7 +198,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pip install openeval
+      - run: pip install openeval-cli
       - run: openeval run tests/eval_chatbot.py --fail-under 0.8
 ```
 
