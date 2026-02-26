@@ -8,13 +8,18 @@ requires-python = ">=3.10"
 authors = [
     {name = "OpenEval Contributors"}
 ]
-keywords = ["llm", "evaluation", "mlops", "testing", "ai"]
+keywords = ["llm", "evaluation", "mlops", "testing", "ai", "agents", "rag", "ci/cd"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Testing",
 ]
 dependencies = [
     "openai>=1.0.0",
@@ -24,6 +29,12 @@ dependencies = [
     "jinja2>=3.0.0",
     "numpy>=1.24.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/edmontecristo/openeval"
+Documentation = "https://github.com/edmontecristo/openeval#readme"
+Repository = "https://github.com/edmontecristo/openeval"
+Issues = "https://github.com/edmontecristo/openeval/issues"
 
 [project.optional-dependencies]
 dev = [

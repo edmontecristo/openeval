@@ -5,6 +5,8 @@ Evaluate, compare, and ship better AI applications with a scorer-based system,
 CLI-first workflow, and CI/CD-native quality gates.
 """
 
+__version__ = "0.1.0"
+
 from openeval.test_case import TestCase
 from openeval.types import ScoreResult, ExperimentResult, EvalResult
 from openeval.scorers.base import BaseScorer, FunctionScorer
